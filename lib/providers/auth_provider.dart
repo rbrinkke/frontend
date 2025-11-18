@@ -1,10 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/auth_models.dart';
 import '../services/auth_service.dart';
-
-part 'auth_provider.g.dart';
 
 /// Auth state to track authentication status
 class AuthState {
@@ -55,7 +52,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = const AuthState(isLoading: false);
       }
     } catch (e) {
-      state = AuthState(
+      state = const AuthState(
         isLoading: false,
         errorMessage: 'Failed to check auth status',
       );

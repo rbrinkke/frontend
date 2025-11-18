@@ -52,11 +52,9 @@ class AuthScreen extends ConsumerWidget {
         return CodeInputView(key: const ValueKey('code_input'));
       case AuthStep.orgSelection:
         return const OrganizationSelectionView(
-            key: ValueKey('org_selection'));
+            key: ValueKey('org_selection'),);
       case AuthStep.token:
         return TokenInputView(key: const ValueKey('token_input'));
-      default:
-        return CredentialsView(key: ValueKey(state.flow));
     }
   }
 }
@@ -158,7 +156,7 @@ class CodeInputView extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 TextButton(
-                    onPressed: controller.back, child: const Text('Back')),
+                    onPressed: controller.back, child: const Text('Back'),),
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
@@ -275,7 +273,7 @@ class TokenInputView extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 TextButton(
-                    onPressed: controller.back, child: const Text('Back')),
+                    onPressed: controller.back, child: const Text('Back'),),
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {

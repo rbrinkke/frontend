@@ -48,6 +48,8 @@ dev_dependencies:
   json_serializable: ^6.7.1
   freezed: ^2.4.7
 
+  async: any
+  stream_channel: any
 flutter:
   uses-material-design: true
 

@@ -25,7 +25,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true);
     try {
       final user = await _authService.getCurrentUser();
-      state = state.copyWith(user: user, isAuthenticated: user != null, isLoading: false);
+      state = state.copyWith(user: user, isAuthenticated: true, isLoading: false);
     } catch (e) {
       await _authService.logout(); // Clear tokens on error
       state = const AuthState(isLoading: false, isAuthenticated: false);
@@ -45,4 +45,8 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 
 final isAuthenticatedProvider = Provider<bool>((ref) {
   return ref.watch(authStateProvider).isAuthenticated;
+});
+
+final currentUserProvider = Provider<User?>((ref) {
+  return ref.watch(authStateProvider).user;
 });

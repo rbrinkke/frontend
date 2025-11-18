@@ -1,12 +1,33 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 /// API Constants for the application
-/// Update these values based on your environment
+/// Automatically detects platform and uses correct localhost address
 class ApiConstants {
   ApiConstants._();
 
-  // Base URLs
-  // Use 10.0.2.2 for Android Emulator to connect to localhost
-  static const String baseUrl = 'http://10.0.2.2:8000';
-  static const String wsBaseUrl = 'ws://10.0.2.2:8000';
+  // Base URLs - Platform specific
+  // Android Emulator: 10.0.2.2 maps to host machine's localhost
+  // iOS/Web/Desktop: localhost works directly
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:8000';
+    } else if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000';
+    } else {
+      return 'http://localhost:8000';
+    }
+  }
+
+  static String get wsBaseUrl {
+    if (kIsWeb) {
+      return 'ws://localhost:8000';
+    } else if (Platform.isAndroid) {
+      return 'ws://10.0.2.2:8000';
+    } else {
+      return 'ws://localhost:8000';
+    }
+  }
 
   // API Endpoints
   // Note: /token is for standard OAuth2, /api/auth/login is for the new flow

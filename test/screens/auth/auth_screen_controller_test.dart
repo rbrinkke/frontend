@@ -21,17 +21,17 @@ void main() {
   group('AuthScreenController Tests', () {
     // ~~~~~~~~~~~~~~~~~~~~~~ Flow and State Tests ~~~~~~~~~~~~~~~~~~~~~~
     test('Initial state is correct', () {
-      expect(controller.debugState.flow, AuthFlow.login);
-      expect(controller.debugState.step, AuthStep.credentials);
-      expect(controller.debugState.isLoading, false);
-      expect(controller.debugState.error, isNull);
+      expect(controller.state.flow, AuthFlow.login);
+      expect(controller.state.step, AuthStep.credentials);
+      expect(controller.state.isLoading, false);
+      expect(controller.state.error, isNull);
     });
 
     test('setFlow updates the auth flow', () {
       controller.setFlow(AuthFlow.register);
-      expect(controller.debugState.flow, AuthFlow.register);
+      expect(controller.state.flow, AuthFlow.register);
       controller.setFlow(AuthFlow.passwordReset);
-      expect(controller.debugState.flow, AuthFlow.passwordReset);
+      expect(controller.state.flow, AuthFlow.passwordReset);
     });
 
     // ~~~~~~~~~~~~~~~~~~~~~~ submitCredentials Tests ~~~~~~~~~~~~~~~~~~~~~~
@@ -46,8 +46,8 @@ void main() {
 
       await controller.submitCredentials('test@example.com', 'password');
 
-      expect(controller.debugState.step, AuthStep.code);
-      expect(controller.debugState.isLoading, false);
+      expect(controller.state.step, AuthStep.code);
+      expect(controller.state.isLoading, false);
     });
 
     test('submitCredentials handles login success (token received)', () async {
@@ -62,8 +62,8 @@ void main() {
 
       // In a real app, a listener would navigate to the home screen.
       // Here, we just check that the state is reset.
-      expect(controller.debugState.step, AuthStep.credentials);
-      expect(controller.debugState.isLoading, false);
+      expect(controller.state.step, AuthStep.credentials);
+      expect(controller.state.isLoading, false);
     });
 
     test('submitCredentials sets error state on failure', () async {
@@ -71,8 +71,8 @@ void main() {
 
       await controller.submitCredentials('test@example.com', 'password');
 
-      expect(controller.debugState.error, isNotNull);
-      expect(controller.debugState.isLoading, false);
+      expect(controller.state.error, isNotNull);
+      expect(controller.state.isLoading, false);
     });
 
     // ~~~~~~~~~~~~~~~~~~~~~~ submitCode Tests ~~~~~~~~~~~~~~~~~~~~~~
@@ -94,8 +94,8 @@ void main() {
 
       await controller.submitCode('123456');
 
-      expect(controller.debugState.step, AuthStep.credentials);
-      expect(controller.debugState.isLoading, false);
+      expect(controller.state.step, AuthStep.credentials);
+      expect(controller.state.isLoading, false);
     });
   });
 }

@@ -4,6 +4,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'package:flutter_fastapi_gemini_app/core/network/secure_storage_service.dart';
+import 'package:flutter_fastapi_gemini_app/models/auth_models.dart';
 import 'package:flutter_fastapi_gemini_app/services/auth_service.dart';
 
 import 'auth_service_test.mocks.dart';
@@ -38,8 +39,14 @@ void main() {
 
       final result = await authService.loginStep1('test@example.com', 'password');
 
-      expect(result, isA<LoginCodeSentResponse>());
-      expect((result as LoginCodeSentResponse).email, 'test@example.com');
+      expect(result, isA<LoginResponse>());
+      result.when(
+        token: (_, __, ___, ____) => fail('Expected code sent response'),
+        codeSent: (message, email, userId, expiresIn, requiresCode) {
+          expect(email, 'test@example.com');
+        },
+        orgSelection: (_, __, ___, ____) => fail('Expected code sent response'),
+      );
     });
 
     test('loginStep2 returns TokenResponse and saves tokens on success', () async {
@@ -57,7 +64,15 @@ void main() {
 
       final result = await authService.loginStep2('test@example.com', 'password', '123456');
 
-      expect(result, isA<TokenResponse>());
+      expect(result, isA<LoginResponse>());
+      result.when(
+        token: (accessToken, refreshToken, tokenType, orgId) {
+          expect(accessToken, 'access');
+          expect(refreshToken, 'refresh');
+        },
+        codeSent: (_, __, ___, ____, _____) => fail('Expected token response'),
+        orgSelection: (_, __, ___, ____) => fail('Expected token response'),
+      );
       verify(mockStorageService.saveAccessToken('access')).called(1);
       verify(mockStorageService.saveRefreshToken('refresh')).called(1);
     });

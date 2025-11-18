@@ -1,3 +1,4 @@
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'auth_models.freezed.dart';
@@ -65,68 +66,32 @@ class ResetPasswordRequest with _$ResetPasswordRequest {
 
 // ~~~~~~~~~~~~~~~~~ RESPONSE MODELS ~~~~~~~~~~~~~~~~~
 
-/// Sealed class to handle the polymorphic response from the /login endpoint
-@JsonSerializable(explicitToJson: true)
-@JsonConverter(typeof(LoginResponseConverter))]
-sealed class LoginResponse {
-  const LoginResponse();
-
-  factory LoginResponse.fromJson(Map<String, dynamic> json) {
-    if (json.containsKey('access_token')) {
-      return TokenResponse.fromJson(json);
-    } else if (json.containsKey('user_id')) {
-      return LoginCodeSentResponse.fromJson(json);
-    } else if (json.containsKey('organizations')) {
-      return OrganizationSelectionResponse.fromJson(json);
-    }
-    throw ArgumentError('Invalid LoginResponse JSON');
-  }
-
-  Map<String, dynamic> toJson();
-}
-
 @freezed
-class TokenResponse extends LoginResponse with _$TokenResponse {
-  @JsonSerializable(explicitToJson: true)
-  const factory TokenResponse({
+sealed class LoginResponse with _$LoginResponse {
+  const factory LoginResponse.token({
     @JsonKey(name: 'access_token') required String accessToken,
     @JsonKey(name: 'refresh_token') required String refreshToken,
     @Default('bearer') @JsonKey(name: 'token_type') String tokenType,
     @JsonKey(name: 'org_id') String? orgId,
-  }) = _TokenResponse;
+  }) = TokenResponse;
 
-  factory TokenResponse.fromJson(Map<String, dynamic> json) =>
-      _$TokenResponseFromJson(json);
-}
-
-
-@freezed
-class LoginCodeSentResponse extends LoginResponse with _$LoginCodeSentResponse {
-  @JsonSerializable(explicitToJson: true)
-  const factory LoginCodeSentResponse({
+  const factory LoginResponse.codeSent({
     required String message,
     required String email,
     @JsonKey(name: 'user_id') required String userId,
     @Default(600) @JsonKey(name: 'expires_in') int expiresIn,
     @Default(true) @JsonKey(name: 'requires_code') bool requiresCode,
-  }) = _LoginCodeSentResponse;
+  }) = LoginCodeSentResponse;
 
-  factory LoginCodeSentResponse.fromJson(Map<String, dynamic> json) =>
-      _$LoginCodeSentResponseFromJson(json);
-}
-
-@freezed
-class OrganizationSelectionResponse extends LoginResponse with _$OrganizationSelectionResponse {
-    @JsonSerializable(explicitToJson: true)
-  const factory OrganizationSelectionResponse({
+  const factory LoginResponse.orgSelection({
     required String message,
     required List<OrganizationOption> organizations,
     @JsonKey(name: 'user_token') required String userToken,
     @Default(900) @JsonKey(name: 'expires_in') int expiresIn,
-  }) = _OrganizationSelectionResponse;
+  }) = OrganizationSelectionResponse;
 
-  factory OrganizationSelectionResponse.fromJson(Map<String, dynamic> json) =>
-      _$OrganizationSelectionResponseFromJson(json);
+  factory LoginResponse.fromJson(Map<String, dynamic> json) =>
+      _$LoginResponseFromJson(json);
 }
 
 @freezed
@@ -157,19 +122,4 @@ class User with _$User {
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
-}
-
-// Custom converter to handle the sealed class
-class LoginResponseConverter implements JsonConverter<LoginResponse, Map<String, dynamic>> {
-  const LoginResponseConverter();
-
-  @override
-  LoginResponse fromJson(Map<String, dynamic> json) {
-    return LoginResponse.fromJson(json);
-  }
-
-  @override
-  Map<String, dynamic> toJson(LoginResponse object) {
-    return object.toJson();
-  }
 }

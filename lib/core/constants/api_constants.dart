@@ -4,8 +4,9 @@ class ApiConstants {
   ApiConstants._();
 
   // Base URLs
-  static const String baseUrl = 'http://localhost:8000';
-  static const String wsBaseUrl = 'ws://localhost:8000';
+  // Use 10.0.2.2 for Android Emulator to connect to localhost
+  static const String baseUrl = 'http://10.0.2.2:8000';
+  static const String wsBaseUrl = 'ws://10.0.2.2:8000';
 
   // API Endpoints
   // Note: /token is for standard OAuth2, /api/auth/login is for the new flow

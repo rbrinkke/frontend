@@ -4,7 +4,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'package:flutter_fastapi_gemini_app/core/network/secure_storage_service.dart';
-import 'package:flutter_fastapi_gemini_app/models/auth_models.dart';
 import 'package:flutter_fastapi_gemini_app/services/auth_service.dart';
 
 import 'auth_service_test.mocks.dart';
@@ -65,12 +64,12 @@ void main() {
 
     test('loginStep2 throws DioError on failure', () async {
       when(mockDio.post(any, data: anyNamed('data'))).thenThrow(
-        DioError(requestOptions: RequestOptions(path: '')),
+        DioException(requestOptions: RequestOptions(path: '')),
       );
 
       expect(
         () => authService.loginStep2('test@example.com', 'password', 'wrong-code'),
-        throwsA(isA<DioError>()),
+        throwsA(isA<DioException>()),
       );
     });
 

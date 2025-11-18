@@ -1,3 +1,4 @@
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -6,8 +7,18 @@ import '../../services/auth_service.dart';
 
 part 'auth_screen_controller.freezed.dart';
 
-enum AuthFlow { login, register, passwordReset }
-enum AuthStep { credentials, code, orgSelection, token }
+enum AuthStep {
+  credentials,
+  code,
+  orgSelection,
+  token,
+}
+
+enum AuthFlow {
+  login,
+  register,
+  passwordReset,
+}
 
 @freezed
 class AuthState with _$AuthState {
@@ -16,14 +27,12 @@ class AuthState with _$AuthState {
     @Default(AuthStep.credentials) AuthStep step,
     @Default(false) bool isLoading,
     @Default(false) bool isAuthenticated,
-    String? error,
-    // Temporary data for multi-step flows
     String? email,
     String? password,
     String? code,
-    String? verificationToken,
-    String? resetToken,
+    String? token,
     List<OrganizationOption>? organizations,
+    String? error,
   }) = _AuthState;
 }
 
@@ -36,17 +45,18 @@ class AuthScreenController extends StateNotifier<AuthState> {
     state = const AuthState().copyWith(flow: flow);
   }
 
-  Future<void> submitCredentials(String email, String password) async {
+  Future<void> submitCredentials(String email, String? password) async {
     state = state.copyWith(isLoading: true, error: null, email: email, password: password);
     try {
       switch (state.flow) {
         case AuthFlow.login:
-          final response = await _authService.loginStep1(email, password);
+          final response = await _authService.loginStep1(email, password!);
           _handleLoginResponse(response);
           break;
         case AuthFlow.register:
-          await _authService.register(email, password);
-          state = state.copyWith(isLoading: false, step: AuthStep.token);
+          await _authService.register(email, password!);
+          // After successful registration, send user to login
+          state = state.copyWith(isLoading: false, flow: AuthFlow.login);
           break;
         case AuthFlow.passwordReset:
           await _authService.requestPasswordReset(email);
@@ -69,20 +79,16 @@ class AuthScreenController extends StateNotifier<AuthState> {
   }
 
   Future<void> submitTokenAndCode(String token, String code, {String? newPassword}) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: null, token: token, code: code);
     try {
-      switch (state.flow) {
-        case AuthFlow.register:
-          await _authService.verifyEmail(token, code);
-          state = state.copyWith(isLoading: false, step: AuthStep.credentials, flow: AuthFlow.login);
-          break;
-        case AuthFlow.passwordReset:
-          await _authService.resetPassword(token, code, newPassword!);
-          state = state.copyWith(isLoading: false, step: AuthStep.credentials, flow: AuthFlow.login);
-          break;
-        case AuthFlow.login:
-          // This case should not happen
-          break;
+      if (state.flow == AuthFlow.passwordReset) {
+        await _authService.resetPassword(token, code, newPassword!);
+        // After successful password reset, send user back to login
+        state = state.copyWith(isLoading: false, step: AuthStep.credentials, flow: AuthFlow.login);
+      } else if (state.flow == AuthFlow.register) {
+        await _authService.verifyEmail(token, code);
+        // After successful email verification, send user to login
+        state = state.copyWith(isLoading: false, step: AuthStep.credentials, flow: AuthFlow.login);
       }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -90,30 +96,29 @@ class AuthScreenController extends StateNotifier<AuthState> {
   }
 
   void _handleLoginResponse(LoginResponse response) {
-    if (response is TokenResponse) {
-      state = state.copyWith(isLoading: false, isAuthenticated: true);
-    } else if (response is LoginCodeSentResponse) {
-      state = state.copyWith(isLoading: false, step: AuthStep.code);
-    } else if (response is OrganizationSelectionResponse) {
-      state = state.copyWith(
-        isLoading: false,
-        step: AuthStep.orgSelection,
-        organizations: response.organizations,
-      );
-    }
+    response.when(
+      token: (accessToken, refreshToken, tokenType, orgId) {
+        state = state.copyWith(isLoading: false, isAuthenticated: true);
+      },
+      codeSent: (message, email, userId, expiresIn, requiresCode) {
+        state = state.copyWith(isLoading: false, step: AuthStep.code);
+      },
+      orgSelection: (message, organizations, userToken, expiresIn) {
+        state = state.copyWith(
+          isLoading: false,
+          step: AuthStep.orgSelection,
+          organizations: organizations,
+        );
+      },
+    );
   }
 
   void back() {
-    if (state.step == AuthStep.token) {
-      state = state.copyWith(step: AuthStep.credentials, error: null);
-    } else {
-      state = state.copyWith(step: AuthStep.credentials, error: null);
-    }
+    state = state.copyWith(step: AuthStep.credentials, error: null, organizations: null);
   }
 }
 
-final authScreenControllerProvider =
-    StateNotifierProvider<AuthScreenController, AuthState>((ref) {
-  final authService = ref.read(authServiceProvider);
+final authScreenControllerProvider = StateNotifierProvider.autoDispose<AuthScreenController, AuthState>((ref) {
+  final authService = ref.watch(authServiceProvider);
   return AuthScreenController(authService);
 });

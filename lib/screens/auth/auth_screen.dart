@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../models/auth_models.dart';
 import 'auth_screen_controller.dart';
 
 class AuthScreen extends ConsumerWidget {
@@ -34,23 +33,28 @@ class AuthScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
-            child: _buildChild(state),
+            child: _buildChild(state, controller),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildChild(AuthState state) {
+  Widget _buildChild(AuthState state, AuthScreenController controller) {
+    if (state.flow == AuthFlow.passwordReset && state.step == AuthStep.code) {
+      return TokenInputView(key: const ValueKey('token_input'));
+    }
+
     switch (state.step) {
       case AuthStep.credentials:
         return CredentialsView(key: ValueKey(state.flow));
       case AuthStep.code:
-        return CodeInputView();
+        return CodeInputView(key: const ValueKey('code_input'));
       case AuthStep.orgSelection:
-        return OrganizationSelectionView();
+        return const OrganizationSelectionView(
+            key: ValueKey('org_selection'));
       case AuthStep.token:
-        return TokenInputView();
+        return TokenInputView(key: const ValueKey('token_input'));
       default:
         return CredentialsView(key: ValueKey(state.flow));
     }
@@ -85,8 +89,9 @@ class CredentialsView extends ConsumerWidget {
               controller: _passwordController,
               decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
-              validator: (value) =>
-                  (value == null || value.length < 8) ? 'Password too short' : null,
+              validator: (value) => (value == null || value.length < 8)
+                  ? 'Password too short'
+                  : null,
             ),
           const SizedBox(height: 20),
           if (state.isLoading)
@@ -112,7 +117,8 @@ class CredentialsView extends ConsumerWidget {
           if (state.error != null)
             Padding(
               padding: const EdgeInsets.only(top: 16),
-              child: Text(state.error!, style: const TextStyle(color: Colors.red)),
+              child:
+                  Text(state.error!, style: const TextStyle(color: Colors.red)),
             ),
         ],
       ),
@@ -145,13 +151,14 @@ class CodeInputView extends ConsumerWidget {
                 (value == null || value.length != 6) ? 'Invalid code' : null,
           ),
           const SizedBox(height: 20),
-           if (state.isLoading)
+          if (state.isLoading)
             const CircularProgressIndicator()
           else
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                TextButton(onPressed: controller.back, child: const Text('Back')),
+                TextButton(
+                    onPressed: controller.back, child: const Text('Back')),
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
@@ -162,10 +169,11 @@ class CodeInputView extends ConsumerWidget {
                 ),
               ],
             ),
-           if (state.error != null)
+          if (state.error != null)
             Padding(
               padding: const EdgeInsets.only(top: 16),
-              child: Text(state.error!, style: const TextStyle(color: Colors.red)),
+              child:
+                  Text(state.error!, style: const TextStyle(color: Colors.red)),
             ),
         ],
       ),
@@ -207,12 +215,12 @@ class OrganizationSelectionView extends ConsumerWidget {
             },
           ),
         ),
-         if (state.isLoading) const CircularProgressIndicator(),
-         if (state.error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(state.error!, style: const TextStyle(color: Colors.red)),
-            ),
+        if (state.isLoading) const CircularProgressIndicator(),
+        if (state.error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Text(state.error!, style: const TextStyle(color: Colors.red)),
+          ),
       ],
     );
   }
@@ -255,17 +263,19 @@ class TokenInputView extends ConsumerWidget {
               controller: _passwordController,
               decoration: const InputDecoration(labelText: 'New Password'),
               obscureText: true,
-              validator: (value) =>
-                  (value == null || value.length < 8) ? 'Password too short' : null,
+              validator: (value) => (value == null || value.length < 8)
+                  ? 'Password too short'
+                  : null,
             ),
           const SizedBox(height: 20),
-           if (state.isLoading)
+          if (state.isLoading)
             const CircularProgressIndicator()
           else
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                TextButton(onPressed: controller.back, child: const Text('Back')),
+                TextButton(
+                    onPressed: controller.back, child: const Text('Back')),
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
@@ -280,10 +290,11 @@ class TokenInputView extends ConsumerWidget {
                 ),
               ],
             ),
-           if (state.error != null)
+          if (state.error != null)
             Padding(
               padding: const EdgeInsets.only(top: 16),
-              child: Text(state.error!, style: const TextStyle(color: Colors.red)),
+              child:
+                  Text(state.error!, style: const TextStyle(color: Colors.red)),
             ),
         ],
       ),

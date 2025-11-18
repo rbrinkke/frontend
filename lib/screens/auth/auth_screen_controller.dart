@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../models/auth_models.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/auth_service.dart';
 
 part 'auth_screen_controller.freezed.dart';
@@ -41,9 +42,10 @@ class AuthState with _$AuthState {
 
 class AuthScreenController extends StateNotifier<AuthState> {
   final AuthService _authService;
+  final Ref ref;
   Timer? _resendTimer;
 
-  AuthScreenController(this._authService) : super(const AuthState());
+  AuthScreenController(this._authService, this.ref) : super(const AuthState());
 
   @override
   void dispose() {
@@ -158,5 +160,11 @@ class AuthScreenController extends StateNotifier<AuthState> {
 
 final authScreenControllerProvider = StateNotifierProvider.autoDispose<AuthScreenController, AuthState>((ref) {
   final authService = ref.watch(authServiceProvider);
-  return AuthScreenController(authService);
+  return AuthScreenController(authService, ref);
 });
+
+extension AuthScreenControllerX on AuthScreenController {
+  void checkAuthStatus() {
+    (this as AuthScreenController).ref.read(authStateProvider.notifier).checkAuthStatus();
+  }
+}

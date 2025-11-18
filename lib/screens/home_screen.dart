@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
 
-/// Home screen shown after successful authentication
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -11,9 +10,19 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
 
+    // Define menu items
+    final menuItems = [
+      MenuItem(title: 'Chat', icon: Icons.chat_bubble_outline),
+      MenuItem(title: 'Settings', icon: Icons.settings_outlined),
+      MenuItem(title: 'Profile', icon: Icons.person_outline),
+      MenuItem(title: 'History', icon: Icons.history_outlined),
+      MenuItem(title: 'Favorites', icon: Icons.favorite_border),
+      MenuItem(title: 'Help', icon: Icons.help_outline),
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: Text(user != null ? 'Welcome, ${user.name ?? ''}' : 'Menu'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
@@ -25,101 +34,55 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                size: 100,
-                color: Colors.green.shade400,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Welcome!',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 16),
-              if (user != null) ...[
-                Text(
-                  'Email: ${user.email}',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                if (user.name != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Name: ${user.name}',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
-              ],
-              const SizedBox(height: 48),
-              const Divider(),
-              const SizedBox(height: 24),
-              Text(
-                'Architecture Features',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              _buildFeatureItem(
-                Icons.security,
-                'JWT Authentication',
-                'Secure token-based auth with auto-refresh',
-              ),
-              _buildFeatureItem(
-                Icons.cable,
-                'Dio HTTP Client',
-                'Production-ready with interceptors',
-              ),
-              _buildFeatureItem(
-                Icons.stream,
-                'WebSocket Ready',
-                'Real-time bidirectional AI streaming',
-              ),
-              _buildFeatureItem(
-                Icons.dashboard_customize,
-                'Riverpod State',
-                'Modern dependency injection',
-              ),
-            ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.2,
           ),
+          itemCount: menuItems.length,
+          itemBuilder: (context, index) {
+            final item = menuItems[index];
+            return Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: InkWell(
+                onTap: () {
+                  // TODO: Implement navigation for each item
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Tapped on ${item.title}')),
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(item.icon, size: 48, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(height: 12),
+                    Text(
+                      item.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
+}
 
-  Widget _buildFeatureItem(IconData icon, String title, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.deepPurple),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class MenuItem {
+  final String title;
+  final IconData icon;
+
+  MenuItem({required this.title, required this.icon});
 }

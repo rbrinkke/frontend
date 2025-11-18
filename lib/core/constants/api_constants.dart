@@ -8,7 +8,14 @@ class ApiConstants {
   static const String wsBaseUrl = 'ws://localhost:8000';
 
   // API Endpoints
-  static const String loginEndpoint = '/token';
+  // Note: /token is for standard OAuth2, /api/auth/login is for the new flow
+  static const String oauthTokenEndpoint = '/token';
+  static const String loginEndpoint = '/api/auth/login';
+  static const String registerEndpoint = '/api/auth/register';
+  static const String verifyCodeEndpoint = '/api/auth/verify-code';
+  static const String requestPasswordResetEndpoint = '/api/auth/request-password-reset';
+  static const String resetPasswordEndpoint = '/api/auth/reset-password';
+
   static const String refreshTokenEndpoint = '/token/refresh';
   static const String usersMeEndpoint = '/users/me';
   static const String geminiChatEndpoint = '/api/gemini/chat';

@@ -6,7 +6,7 @@ import '../core/network/dio_client.dart';
 import '../core/network/secure_storage_service.dart';
 import '../models/auth_models.dart';
 
-/// Auth service for handling authentication
+/// Auth service for handling the new multi-step authentication flows
 class AuthService {
   final Dio _dio;
   final SecureStorageService _storageService;
@@ -17,31 +17,72 @@ class AuthService {
   })  : _dio = dio,
         _storageService = storageService;
 
-  /// Login with username and password
-  /// CRITICAL: Uses FormData instead of JSON body (per best practices doc)
-  /// This is required by FastAPI's OAuth2PasswordRequestForm
-  Future<TokenResponse> login(LoginCredentials credentials) async {
-    // IMPORTANT: OAuth2 requires application/x-www-form-urlencoded
-    // NOT JSON! This is a common pitfall mentioned in the best practices doc.
-    final formData = FormData.fromMap({
-      'username': credentials.username,
-      'password': credentials.password,
-    });
-
+  /// Login Step 1: Send email and password
+  /// Returns a sealed LoginResponse which can be TokenResponse,
+  /// LoginCodeSentResponse, or OrganizationSelectionResponse
+  Future<LoginResponse> loginStep1(String email, String password) async {
+    final request = LoginRequest(email: email, password: password);
     final response = await _dio.post(
       ApiConstants.loginEndpoint,
-      data: formData,
+      data: request.toJson(),
     );
+    return LoginResponse.fromJson(response.data);
+  }
 
-    final tokenResponse = TokenResponse.fromJson(response.data);
+  /// Login Step 2: Send email, password, and the verification code
+  Future<LoginResponse> loginStep2(String email, String password, String code, {String? orgId}) async {
+    final request = LoginRequest(email: email, password: password, code: code, orgId: orgId);
+    final response = await _dio.post(
+      ApiConstants.loginEndpoint,
+      data: request.toJson(),
+    );
+    final loginResponse = LoginResponse.fromJson(response.data);
 
-    // Save tokens to secure storage
-    await _storageService.saveAccessToken(tokenResponse.accessToken);
-    if (tokenResponse.refreshToken != null) {
-      await _storageService.saveRefreshToken(tokenResponse.refreshToken!);
+    if (loginResponse is TokenResponse) {
+      await _saveTokens(loginResponse);
     }
 
-    return tokenResponse;
+    return loginResponse;
+  }
+
+  /// Register a new user
+  Future<void> register(String email, String password) async {
+    final request = UserCreate(email: email, password: password);
+    await _dio.post(
+      ApiConstants.registerEndpoint,
+      data: request.toJson(),
+    );
+  }
+
+  /// Verify email with a verification token and code
+  Future<void> verifyEmail(String verificationToken, String code) async {
+    final request = VerifyEmailRequest(verificationToken: verificationToken, code: code);
+    await _dio.post(
+      ApiConstants.verifyCodeEndpoint,
+      data: request.toJson(),
+    );
+  }
+
+  /// Request a password reset email
+  Future<void> requestPasswordReset(String email) async {
+    final request = RequestPasswordResetRequest(email: email);
+    await _dio.post(
+      ApiConstants.requestPasswordResetEndpoint,
+      data: request.toJson(),
+    );
+  }
+
+  /// Reset password with a reset token, code, and new password
+  Future<void> resetPassword(String resetToken, String code, String newPassword) async {
+    final request = ResetPasswordRequest(
+      resetToken: resetToken,
+      code: code,
+      newPassword: newPassword,
+    );
+    await _dio.post(
+      ApiConstants.resetPasswordEndpoint,
+      data: request.toJson(),
+    );
   }
 
   /// Get current user info
@@ -58,6 +99,12 @@ class AuthService {
   /// Check if user is logged in
   Future<bool> isLoggedIn() async {
     return await _storageService.isLoggedIn();
+  }
+
+  /// Helper to save tokens
+  Future<void> _saveTokens(TokenResponse tokenResponse) async {
+    await _storageService.saveAccessToken(tokenResponse.accessToken);
+    await _storageService.saveRefreshToken(tokenResponse.refreshToken);
   }
 }
 

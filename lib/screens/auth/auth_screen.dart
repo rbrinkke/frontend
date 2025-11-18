@@ -9,6 +9,11 @@ class AuthScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<AuthState>(authScreenControllerProvider, (previous, next) {
+      if (next.isAuthenticated) {
+        ref.read(authScreenControllerProvider.notifier).checkAuthStatus();
+      }
+    });
     final state = ref.watch(authScreenControllerProvider);
     final controller = ref.read(authScreenControllerProvider.notifier);
 

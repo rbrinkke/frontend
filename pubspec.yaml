@@ -1,0 +1,50 @@
+name: flutter_fastapi_gemini_app
+description: A production-ready Flutter app using FastAPI backend and Gemini AI, following best practices.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management - Riverpod (Modern, annotation-based)
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Networking - dio (Production-ready HTTP client)
+  dio: ^5.4.0
+
+  # Secure Storage - For JWT tokens
+  flutter_secure_storage: ^9.0.0
+
+  # WebSockets - For real-time AI streaming
+  web_socket_channel: ^2.4.0
+
+  # JSON Serialization
+  json_annotation: ^4.8.1
+
+  # Logging
+  logger: ^2.0.2+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linting
+  flutter_lints: ^3.0.1
+
+  # Code Generation
+  build_runner: ^2.4.7
+  riverpod_generator: ^2.3.11
+  json_serializable: ^6.7.1
+
+flutter:
+  uses-material-design: true
+
+  # assets:
+  #   - images/
+  #   - fonts/

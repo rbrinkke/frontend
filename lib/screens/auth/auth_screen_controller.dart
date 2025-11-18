@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -33,15 +35,24 @@ class AuthState with _$AuthState {
     String? token,
     List<OrganizationOption>? organizations,
     String? error,
+    @Default(0) int resendCooldown,
   }) = _AuthState;
 }
 
 class AuthScreenController extends StateNotifier<AuthState> {
   final AuthService _authService;
+  Timer? _resendTimer;
 
   AuthScreenController(this._authService) : super(const AuthState());
 
+  @override
+  void dispose() {
+    _resendTimer?.cancel();
+    super.dispose();
+  }
+
   void setFlow(AuthFlow flow) {
+    _resendTimer?.cancel();
     state = const AuthState().copyWith(flow: flow);
   }
 
@@ -96,11 +107,14 @@ class AuthScreenController extends StateNotifier<AuthState> {
   }
 
   void _handleLoginResponse(LoginResponse response) {
+    _resendTimer?.cancel();
+
     response.when(
       token: (accessToken, refreshToken, tokenType, orgId) {
         state = state.copyWith(isLoading: false, isAuthenticated: true);
       },
       codeSent: (message, email, userId, expiresIn, requiresCode) {
+        _startResendTimer(expiresIn);
         state = state.copyWith(isLoading: false, step: AuthStep.code);
       },
       orgSelection: (message, organizations, userToken, expiresIn) {
@@ -113,8 +127,32 @@ class AuthScreenController extends StateNotifier<AuthState> {
     );
   }
 
+  Future<void> resendCode() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      // Re-submit credentials to trigger a new code
+      final response = await _authService.loginStep1(state.email!, state.password!);
+      _handleLoginResponse(response);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  void _startResendTimer(int seconds) {
+    _resendTimer?.cancel();
+    state = state.copyWith(resendCooldown: seconds);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (state.resendCooldown > 0) {
+        state = state.copyWith(resendCooldown: state.resendCooldown - 1);
+      } else {
+        _resendTimer?.cancel();
+      }
+    });
+  }
+
   void back() {
-    state = state.copyWith(step: AuthStep.credentials, error: null, organizations: null);
+    _resendTimer?.cancel();
+    state = state.copyWith(step: AuthStep.credentials, error: null, organizations: null, resendCooldown: 0);
   }
 }
 
